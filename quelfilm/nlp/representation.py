@@ -3,6 +3,7 @@ import numpy as np
 import typing as t
 
 from quelfilm import utils
+from quelfilm.dump import dump_word_index, dump_merged_word_matrix
 
 
 class IndexedRepresentation:
@@ -25,10 +26,13 @@ class IndexedRepresentation:
                     if index.get(lem) is None:
                         index[lem] = idx
                         idx += 1
-        return pd.DataFrame([{'lem': k, 'index': index[k]} for k in index], columns=self.index_columns)
+        index_dict = [{self.index_columns[0]: k, self.index_columns[1]: index[k]} for k in index]
+        dump_word_index(index_dict)
+
+        return pd.DataFrame(index_dict, columns=self.index_columns)
     
     def get_index_from_lem(self, lem) -> int:
-        idx = self.index.loc[self.index['lem'] == lem, 'index']
+        idx = self.index.loc[self.index[self.index_columns[0]] == lem, self.index_columns[1]]
         if idx.empty:
             return None
         else:
@@ -73,7 +77,13 @@ class MergedMatrixRepresentation(IndexedRepresentation):
     def __init__(self, data):
         IndexedRepresentation.__init__(self, data)
         self.data = self.process_merged_sentences_for_all(data)
+        self.save_merged_matrix(self.data)
         
+    def save_merged_matrix(self, matrix):
+        as_list = lambda np_array: np_array.tolist() 
+        serializable_matrix = utils.apply_for_each_key(matrix, as_list)
+        dump_merged_word_matrix(serializable_matrix)
+
     def process_words_merged_matrix(self, example) -> np.array:
         matrix = self.process_words_matrix(example)
         return sum(list(matrix))

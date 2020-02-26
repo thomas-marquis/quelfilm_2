@@ -2,15 +2,15 @@ import nltk
 from nltk.stem.snowball import FrenchStemmer
 
 from quelfilm import utils
+from quelfilm.dump import dump_stop_words
 from quelfilm.nlp.load import DataLoader, InputData
 
 
 class Preprocessing:
     def __init__(self, data_loader: DataLoader):
-        nltk.download('french')
         self.tokenizer = nltk.RegexpTokenizer(r'\w+')
-        self.stop_words = nltk.corpus.stopwords.words('french')
         self.stemmer = FrenchStemmer()
+        self.get_stop_words()
         
         # TODO compose it
         inputs: InputData = data_loader.load()
@@ -22,6 +22,11 @@ class Preprocessing:
         data = self.lemmatize_all(data)
         self.data = data
         
+    def get_stop_words(self):
+        nltk.download('french')
+        self.stop_words = nltk.corpus.stopwords.words('french')
+        dump_stop_words(self.stop_words)
+
     def to_lower_case_one(self, example: str):
         return example.lower()
         
